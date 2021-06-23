@@ -1,43 +1,33 @@
 const responseUtil = {}
 
-responseUtil.success = (h, message, data) => {
+responseUtil.success = (h, data, message, statusCode) => {
   const body = {
-    status: 'success',
-    message: message || null,
-    data
+    status: 'success'
   }
+  if(message) body.message = message
+  if(data) body.data = data
   const response = h.response(body)
-  response.code(201)
+  response.code(statusCode || 200)
   return response
 }
 
-responseUtil.querySuccess = (h, data) => {
-  const body = {
-    status: 'success',
-    data
-  }
-  const response = h.response(body)
-  response.code(200)
-  return response
-}
-
-responseUtil.fail = (h, message) => {
+responseUtil.fail = (h, message, statusCode) => {
   const body = {
     status: 'fail',
-    message: message || null
   }
+  if(message) body.message = message
   const response = h.response(body)
-  response.code(400)
+  response.code(statusCode || 400)
   return response
 }
 
 responseUtil.error = (h, message) => {
   const body = {
     status: 'error',
-    message: message || null
   }
+  if(message) body.message = message
   const response = h.response(body)
-  response.code(500)
+  response.code(statusCode || 500)
   return response
 }
 

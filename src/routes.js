@@ -1,4 +1,11 @@
+const Joi = require('joi')
 const { getAllBooksHandler, getBookByIdHandler, editBookByIdHandler, deleteBookByIdHandler, addBookHandler } = require('./handler')
+
+const queryScheme = Joi.object({
+  name: Joi.string(),
+  reading: Joi.number(),
+  finished: Joi.number()
+})
 
 const routes = [
   {
@@ -9,7 +16,12 @@ const routes = [
   {
     method: 'GET',
     path: '/books',
-    handler: getAllBooksHandler
+    handler: getAllBooksHandler,
+    options: {
+      validate: {
+        query: queryScheme
+      }
+    }
   },
   {
     method: 'GET',
@@ -23,7 +35,7 @@ const routes = [
   },
   {
     method: 'DELETE',
-    path: '/notes/{id}',
+    path: '/books/{id}',
     handler: deleteBookByIdHandler
   }
 ]

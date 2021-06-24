@@ -5,10 +5,12 @@ const responseUtil = require('./util/response_util')
 const addBookHandler = (request, h) => {
   try {
     const book = request.payload
-    if (!book.name)
+    if (!book.name) {
       return responseUtil.fail(h, 'Gagal menambahkan buku. Mohon isi nama buku')
-    if (book.readPage > book.pageCount)
+    }
+    if (book.readPage > book.pageCount) {
       return responseUtil.fail(h, 'Gagal menambahkan buku. readPage tidak boleh lebih besar dari pageCount')
+    }
     const id = nanoid(16)
     const finished = book.pageCount === book.readPage
     const insertedAt = new Date().toISOString()
@@ -18,17 +20,19 @@ const addBookHandler = (request, h) => {
     }
     books.push(newBook)
     const isSuccess = books.filter((book) => book.id === id).length > 0
-    if (isSuccess)
-      return responseUtil.success(h, 'Buku berhasil ditambahkan', { bookId: newBook.id }, 201)
+    if (isSuccess) {
+      return responseUtil.success(h, { bookId: newBook.id }, 'Buku berhasil ditambahkan', 201)
+    }
   } catch {
     return responseUtil.error(h, 'Buku gagal ditambahkan')
   }
 }
 
 const getAllBooksHandler = (request, h) => {
-  const filteredBooks = books
-  if (request.query)
+  let filteredBooks = [...books]
+  if (!isEmptyObject(request.query)) {
     filteredBooks = filterBooksByQuery(filteredBooks, request.query)
+  }
   const mappedBooks = filteredBooks.map((book) => {
     const { id, name, publisher } = book
     return { id, name, publisher }
@@ -48,15 +52,17 @@ const getBookByIdHandler = (request, h) => {
 const editBookByIdHandler = (request, h) => {
   const { id } = request.params
   const updatedBook = request.payload
-  if (!updatedBook.name)
+  if (!updatedBook.name) {
     return responseUtil.fail(h, 'Gagal memperbarui buku. Mohon isi nama buku')
-  if (book.readPage > book.pageCount)
+  }
+  if (updatedBook.readPage > updatedBook.pageCount) {
     return responseUtil.fail(h, 'Gagal memperbarui buku. readPage tidak boleh lebih besar dari pageCount')
+  }
   const updatedAt = new Date().toISOString()
   const index = books.findIndex((book) => book.id === id)
   if (index !== -1) {
     Object.assign(books[index], { ...updatedBook, updatedAt })
-    return responseUtil.success({ h, message: 'Buku berhasil diperbarui' })
+    return responseUtil.success(h, undefined, 'Buku berhasil diperbarui')
   }
   return responseUtil.fail(h, 'Gagal memperbarui buku. Id tidak ditemukan', 404)
 }
@@ -64,23 +70,29 @@ const editBookByIdHandler = (request, h) => {
 const deleteBookByIdHandler = (request, h) => {
   const { id } = request.params
 
-  const index = books.findIndex((note) => note.id === id)
+  const index = books.findIndex((book) => book.id === id)
 
   if (index !== -1) {
     books.splice(index, 1)
-    return responseUtil.success({ h, message: 'Buku berhasil dihapus' })
+    return responseUtil.success(h, undefined, 'Buku berhasil dihapus')
   }
   return responseUtil.fail(h, 'Buku gagal dihapus. Id tidak ditemukan', 404)
 }
 
 const filterBooksByQuery = (books, query) => {
-  if (query.name && query.name !== '')
-    books = books.filter((book) => book.name.includes(query.name))
-  if (query.reading === (0 || 1))
-    books = books.filter((book) => query.reading === book.reading)
-  if (query.finished === (0 || 1))
-    books = books.filter((book) => query.finished === book.finished)
-  return books
+  let filteredBooks = books
+  if (query.name && query.name !== '') {
+    filteredBooks = filteredBooks.filter((book) => book.name.toLowerCase().includes(query.name.toLowerCase()))
+  }
+  if (query.reading === 1 || query.reading === 0) {
+    filteredBooks = filteredBooks.filter((book) => !!query.reading === book.reading)
+  }
+  if (query.finished === 1 || query.finished === 0) {
+    filteredBooks = filteredBooks.filter((book) => !!query.finished === book.finished)
+  }
+  return filteredBooks
 }
+
+const isEmptyObject = (obj) => (Object.keys(obj).length === 0)
 
 module.exports = { addBookHandler, getAllBooksHandler, getBookByIdHandler, editBookByIdHandler, deleteBookByIdHandler }
